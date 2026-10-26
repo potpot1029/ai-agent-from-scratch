@@ -1,3 +1,4 @@
+import argparse
 import os
 
 from dotenv import load_dotenv
@@ -11,6 +12,10 @@ def main():
     if api_key is None:
         raise RuntimeError("OPENROUTER_API_KEY is not set.")
 
+    parser = argparse.ArgumentParser(description="AI agent")
+    parser.add_argument("user_prompt", type=str, help="User prompt")
+    args = parser.parse_args()
+
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=api_key,
@@ -21,7 +26,7 @@ def main():
         messages=[
             {
                 "role": "user",
-                "content": "Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum.",
+                "content": args.user_prompt,
             }
         ],
     )
@@ -29,9 +34,7 @@ def main():
     if response.usage is None:
         raise RuntimeError("error getting chat completion via OpenRouter.")
 
-    print(
-        "User prompt: Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum."
-    )
+    print(f"User prompt: {args.user_prompt}")
     print(f"Prompt tokens: {response.usage.prompt_tokens}")
     print(f"Response tokens: {response.usage.completion_tokens}")
 
