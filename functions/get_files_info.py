@@ -1,24 +1,21 @@
 import os
 
+from functions.paths import resolve_in_working_dir
+
 
 def get_files_info(working_directory: str, directory: str = ".") -> str:
     try:
-        wd_abs_path = os.path.abspath(working_directory)
-        target_full_path = os.path.normpath(os.path.join(wd_abs_path, directory))
-
-        valid_target_dir = (
-            os.path.commonpath([wd_abs_path, target_full_path]) == wd_abs_path
-        )
-        if not valid_target_dir:
+        target_dir = resolve_in_working_dir(working_directory, directory)
+        if target_dir is None:
             return f'Error: Cannot list "{directory}" as it is outside the permitted working directory'
 
-        is_directory = os.path.isdir(target_full_path)
+        is_directory = os.path.isdir(target_dir)
         if not is_directory:
             return f'Error: "{directory}" is not a directory'
 
         files_info = []
-        for file in os.listdir(target_full_path):
-            file_full_path = os.path.join(target_full_path, file)
+        for file in os.listdir(target_dir):
+            file_full_path = os.path.join(target_dir, file)
 
             file_size = os.path.getsize(file_full_path)
             is_dir = os.path.isdir(file_full_path)
