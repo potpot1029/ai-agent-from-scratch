@@ -4,6 +4,20 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
+from functions.call_function import call_function
+from functions.get_file_content import schema_get_file_content
+from functions.get_files_info import schema_get_files_info
+from functions.run_python_file import schema_run_python_file
+from functions.write_file import schema_write_file
+from prompts import system_prompt
+
+available_functions = [
+    schema_get_files_info,
+    schema_get_file_content,
+    schema_run_python_file,
+    schema_write_file,
+]
+
 
 def main():
     load_dotenv()
@@ -23,12 +37,14 @@ def main():
     )
 
     messages = [
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": args.user_prompt},
     ]
 
     response = client.chat.completions.create(
         model="openrouter/free",
         messages=messages,
+        tools=available_functions,
     )
 
     if response.usage is None:
@@ -39,8 +55,16 @@ def main():
         print(f"Prompt tokens: {response.usage.prompt_tokens}")
         print(f"Response tokens: {response.usage.completion_tokens}")
 
+    message = response.choices[0].message
+
+    if message.tool_calls is not None:
+        for tool_call in message.tool_calls:
+            result_message = call_function(tool_call, args.verbose)
+            if args.verbose:
+                print(f"-> {result_message['content']}")
+
     print("Response:")
-    print(response.choices[0].message.content)
+    print(message.content)
 
 
 if __name__ == "__main__":
